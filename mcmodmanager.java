@@ -1,12 +1,10 @@
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,8 +23,10 @@ class ModManager {
                     -h,         --help                  print usage information
                     -c,         --check-updates         check for any available updates for all mods
                     -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
+                    -a ModID,   --add-mod ModID         Adds a new mod to mod list and installs it
                     """;
         System.out.println(usage);
+        System.exit(0);
 
     }
 
@@ -208,37 +208,31 @@ class ModManager {
 
     public static void main(String[] args) {
 
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
-            apiKey = (String) jsonData.get("apiKey");
-        } catch (FileNotFoundException e) {
-
-            // TODO: Create new file if one doesnt exist
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("ERROR: Data file not found or data corrupted.");
-            System.exit(0);
-        }
-
         if (args.length > 0) {
 
             switch (args[0]) {
-
-                case "check-updates":
-                    checkUpdates();
-                    break;
-
-                case "add-mod":
-                    addMod(args[1]);
-                    break;
 
                 case "-h", "--help":
                     printUsage();
                     break;
 
+                case "-c", "--check-updates":
+                    init.configFile();
+                    init.apiKey();
+
+                    checkUpdates();
+                    break;
+
+                case "-a", "--add-mod":
+                    init.configFile();
+                    init.apiKey();
+
+                    addMod(args[1]);
+                    break;
+
                 case "-k", "--api-key":
+                    init.configFile();
+
                     setAPIKey(args[1]);
                     break;
 
