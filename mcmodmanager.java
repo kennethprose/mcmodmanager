@@ -1,8 +1,12 @@
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -11,6 +15,47 @@ import java.net.http.HttpResponse;
 class ModManager {
 
     public static String apiKey;
+
+    public static void printUsage() {
+
+        String usage = """
+                usage: java mcmodmanager.java [OPTIONS]
+
+                OPTIONS:
+                    -h,         --help                  print usage information
+                    -c,         --check-updates         check for any available updates for all mods
+                    -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
+                    """;
+        System.out.println(usage);
+
+    }
+
+    /**
+     * This function is used to set the API key for curseforge.
+     *
+     * @param key The API key to be set.
+     */
+    public static void setAPIKey(String key) {
+
+        JSONParser parser = new JSONParser();
+
+        try {
+
+            JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
+
+            // Add or overwrite the users key to the JSON data
+            jsonData.put("apiKey", key);
+
+            // Write the updated data back to the JSON file
+            FileWriter file = new FileWriter("mcmodmanager.json");
+            file.write(jsonData.toJSONString());
+            file.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
     /**
      * This function makes an API call to the CurseForge API and returns the
@@ -167,6 +212,10 @@ class ModManager {
             JSONParser parser = new JSONParser();
             JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
             apiKey = (String) jsonData.get("apiKey");
+        } catch (FileNotFoundException e) {
+
+            // TODO: Create new file if one doesnt exist
+
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("ERROR: Data file not found or data corrupted.");
@@ -183,6 +232,14 @@ class ModManager {
 
                 case "add-mod":
                     addMod(args[1]);
+                    break;
+
+                case "-h", "--help":
+                    printUsage();
+                    break;
+
+                case "-k", "--api-key":
+                    setAPIKey(args[1]);
                     break;
 
                 default:
