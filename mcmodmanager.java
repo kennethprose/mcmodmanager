@@ -4,10 +4,13 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+
+import javax.print.DocFlavor.STRING;
 
 class ModManager {
 
@@ -23,6 +26,7 @@ class ModManager {
                     -c VERSION, --check-updates VERSION check for any available updates for all mods
                     -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
                     -a ModID,   --add-mod ModID         Adds a new mod to mod list and installs it
+                    -r ModID,   --remove-mod ModID      Removes a mod from the mod list and uninstalls it
                     """;
         System.out.println(usage);
         System.exit(0);
@@ -229,6 +233,64 @@ class ModManager {
 
     }
 
+    public static void removeMod(String modID) {
+
+        // Initialize JSON parser to parse JSON file
+        JSONParser parser = new JSONParser();
+
+        JSONObject jsonData = null;
+
+        try {
+
+            // Read JSON file and parse its contents into a JSONObject
+            jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // Get the 'mods' array and 'serverVersion' from the JSON object
+        JSONArray modsArray = (JSONArray) jsonData.get("mods");
+
+        // For each mod...
+        for (int i = 0; i < modsArray.size(); i++) {
+
+            // Grab its mod ID
+            JSONObject currentMod = (JSONObject) modsArray.get(i);
+            String currentModID = (String) currentMod.get("modID");
+
+            // And if it matches the one we are looking for...
+            if (currentModID.equals(modID)) {
+
+                // remove it
+                modsArray.remove(i);
+
+                // Write the updated JSON object back to the file
+                FileWriter file;
+                try {
+
+                    file = new FileWriter("mcmodmanager.json");
+                    file.write(jsonData.toJSONString());
+                    file.close();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // Update user
+                System.out.println("The mod has successfully been removed");
+                return;
+
+            }
+
+        }
+
+        // If all mods were searched without a match
+        System.out.println("The specified mod could not be found");
+
+    }
+
     public static void main(String[] args) {
 
         if (args.length > 0) {
@@ -251,6 +313,12 @@ class ModManager {
                     apiKey = init.apiKey();
 
                     addMod(args[1]);
+                    break;
+
+                case "-r", "--remove-mod":
+                    init.configFile();
+
+                    removeMod(args[1]);
                     break;
 
                 case "-k", "--api-key":
