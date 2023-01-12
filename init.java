@@ -22,6 +22,7 @@ public class init {
             JSONObject obj = new JSONObject();
             obj.put("apiKey", "");
             obj.put("mods", new JSONArray());
+            obj.put("serverVersion", "");
             try {
 
                 FileWriter file = new FileWriter("mcmodmanager.json");
@@ -52,9 +53,11 @@ public class init {
 
         try {
 
+            // Open config file
             JSONParser parser = new JSONParser();
             JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
 
+            // Check if current api entry is blank
             apiKey = (String) jsonData.get("apiKey");
             if (apiKey.equals("")) {
 

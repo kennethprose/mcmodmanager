@@ -2,7 +2,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.net.URI;
@@ -21,7 +20,7 @@ class ModManager {
 
                 OPTIONS:
                     -h,         --help                  print usage information
-                    -c,         --check-updates         check for any available updates for all mods
+                    -c VERSION, --check-updates VERSION check for any available updates for all mods
                     -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
                     -a ModID,   --add-mod ModID         Adds a new mod to mod list and installs it
                     """;
@@ -115,7 +114,7 @@ class ModManager {
      * @throws Exception if the mcmodmanager.json file is not found or data is
      *                   corrupted
      */
-    public static void checkUpdates() {
+    public static void checkUpdates(String desiredVersion) {
 
         JSONParser parser = new JSONParser();
 
@@ -128,15 +127,15 @@ class ModManager {
             // Iterate through the mods array
             for (int i = 0; i < modsArray.size(); i++) {
 
-                // Get the mod information from the config file (name, curseforgeID,
+                // Get the mod information from the config file (name, modID,
                 // currentVersion)
                 JSONObject mod = (JSONObject) modsArray.get(i);
                 String name = (String) mod.get("name");
-                String curseforgeID = (String) mod.get("curseforgeID");
+                String modID = (String) mod.get("modID");
                 String currentVersion = (String) mod.get("currentVersion");
 
                 // Get the latest version of the mod from CurseForge API
-                JSONObject getModFiles = curseForgeAPICall("/v1/mods/" + curseforgeID + "/files", "");
+                JSONObject getModFiles = curseForgeAPICall("/v1/mods/" + modID + "/files", "");
                 JSONArray dataArray = (JSONArray) getModFiles.get("data");
                 JSONObject firstDataObject = (JSONObject) dataArray.get(0);
                 String newestGameVersion = (String) ((JSONArray) firstDataObject.get("gameVersions")).get(0);
@@ -175,15 +174,40 @@ class ModManager {
             // Read JSON file and parse its contents into a JSONObject
             JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
 
-            // Get the 'mods' array and 'currentServerVersion' from the JSON object
+            // Get the 'mods' array and 'serverVersion' from the JSON object
             JSONArray modsArray = (JSONArray) jsonData.get("mods");
-            String currentServerVersion = (String) jsonData.get("currentServerVersion");
+            String serverVersion = (String) jsonData.get("serverVersion");
+
+            // Get mod info from curseforge
+            JSONObject modInfo = (JSONObject) curseForgeAPICall("/v1/mods/" + modID, "").get("data");
+            String modName = (String) modInfo.get("name");
+
+            // Get most recent file for current server version of this mod
+            JSONObject modFiles = (JSONObject) curseForgeAPICall("/v1/mods/" + modID + "/files",
+                    "?gameVersion=" + serverVersion);
+            JSONObject resultInfo = (JSONObject) modFiles.get("pagination");
+
+            // If no mods are found for the current server version, notify user and exit
+            if ((long) resultInfo.get("resultCount") == 0) {
+                System.out.println("A version of " + modName + " could not be found for Minecraft " + serverVersion);
+                return;
+            }
+
+            // Now that we know there is at least one released file for this mod on this
+            // version, we get its info
+            JSONArray fileArray = (JSONArray) modFiles.get("data");
+            JSONObject mostRecentVersion = (JSONObject) fileArray.get(0);
+            long fileID = (long) mostRecentVersion.get("id");
+            String fileName = (String) mostRecentVersion.get("fileName");
+            String downloadLink = (String) mostRecentVersion.get("downloadUrl");
 
             // Create a new JSON object for the new mod
             JSONObject newMod = new JSONObject();
-            newMod.put("curseforgeID", modID);
-            newMod.put("name", "New Mod");
-            newMod.put("currentVersion", currentServerVersion);
+            newMod.put("modID", modID);
+            newMod.put("name", modName);
+            newMod.put("currentVersion", serverVersion);
+            newMod.put("fileName", fileName);
+            newMod.put("fileID", fileID);
 
             // Add the new mod object to the 'mods' array
             modsArray.add(newMod);
@@ -198,7 +222,6 @@ class ModManager {
             // Handle any exceptions that may occur during the reading, parsing, or writing
             // process
             e.printStackTrace();
-            System.out.println("ERROR: Data file not found or data corrupted.");
 
         }
 
@@ -218,14 +241,14 @@ class ModManager {
 
                 case "-c", "--check-updates":
                     init.configFile();
-                    init.apiKey();
+                    apiKey = init.apiKey();
 
-                    checkUpdates();
+                    checkUpdates(args[1]);
                     break;
 
                 case "-a", "--add-mod":
                     init.configFile();
-                    init.apiKey();
+                    apiKey = init.apiKey();
 
                     addMod(args[1]);
                     break;
