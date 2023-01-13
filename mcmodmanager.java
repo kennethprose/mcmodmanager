@@ -329,6 +329,8 @@ class ModManager {
 
     public static void main(String[] args) {
 
+        init.modFolder();
+
         if (args.length > 0) {
 
             switch (args[0]) {

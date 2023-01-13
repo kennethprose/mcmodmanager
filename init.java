@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -45,6 +46,22 @@ public class init {
             System.exit(0);
         }
 
+    }
+
+    /**
+     * modFolder method checks if a folder called "mods" exists in the current
+     * directory.
+     * If the folder exists, the method does nothing.
+     * If the folder does not exist, the method will notify the user that the folder
+     * is missing and exit the program.
+     */
+    public static void modFolder() {
+        File modFolder = new File("./mods");
+        if (!modFolder.exists()) {
+            System.out.println(
+                    "Can not find the mods folder. Make sure you are running this program in the same directory as the mods folder for your server.");
+            System.exit(0);
+        }
     }
 
     public static String apiKey() {
