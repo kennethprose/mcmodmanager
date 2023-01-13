@@ -2,15 +2,17 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
-import javax.print.DocFlavor.STRING;
 
 class ModManager {
 
@@ -108,6 +110,40 @@ class ModManager {
 
         // Return the JSON object
         return jsonResponse;
+    }
+
+    /**
+     * Function to download a file from a given URL and save it to a specified
+     * location
+     *
+     * @param urlStr the URL of the file to be downloaded
+     * @param file   the location to save the downloaded file
+     * @throws IOException
+     */
+    public static void downloadFile(String urlStr, String file) throws IOException {
+
+        // Create a URL object from the given URL string
+        URL url = new URL(urlStr);
+
+        // Open an InputStream to read data from the URL
+        InputStream is = url.openStream();
+
+        // Create a FileOutputStream to save the file to the specified location
+        OutputStream os = new FileOutputStream(file);
+
+        // Create a byte array to store read data
+        byte[] b = new byte[2048];
+        int length;
+
+        // Read data from the InputStream and write it to the OutputStream
+        // Repeat until all data has been read
+        while ((length = is.read(b)) != -1) {
+            os.write(b, 0, length);
+        }
+
+        // Close the InputStream and OutputStream
+        is.close();
+        os.close();
     }
 
     /**
