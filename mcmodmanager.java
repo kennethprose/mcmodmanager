@@ -2,6 +2,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -257,6 +258,9 @@ class ModManager {
             file.write(jsonData.toJSONString());
             file.close();
 
+            // Download the file to the mods folder
+            downloadFile(downloadLink, "./mods/" + fileName);
+
         } catch (Exception e) {
 
             // Handle any exceptions that may occur during the reading, parsing, or writing
@@ -264,8 +268,6 @@ class ModManager {
             e.printStackTrace();
 
         }
-
-        // TODO: Confirm with the user and download the file
 
     }
 
@@ -299,7 +301,12 @@ class ModManager {
             // And if it matches the one we are looking for...
             if (currentModID.equals(modID)) {
 
-                // remove it
+                // Get the file name and delete the file from the mods folder
+                String fileName = (String) currentMod.get("fileName");
+                File modFile = new File("./mods/" + fileName);
+                modFile.delete();
+
+                // remove it from config file
                 modsArray.remove(i);
 
                 // Write the updated JSON object back to the file
