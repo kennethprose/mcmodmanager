@@ -2,10 +2,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class init {
 
@@ -90,6 +93,66 @@ public class init {
         }
 
         return apiKey;
+
+    }
+
+    public static void fileCheck() {
+
+        JSONParser parser = new JSONParser();
+        try {
+
+            // Open JSON file
+            JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
+
+            // Get mods array
+            JSONArray modsArray = (JSONArray) jsonData.get("mods");
+
+            // For each mod...
+            for (int i = 0; i < modsArray.size(); i++) {
+
+                // Get mod info
+                JSONObject mod = (JSONObject) modsArray.get(i);
+                String name = (String) mod.get("name");
+                String fileName = (String) mod.get("fileName");
+                String modID = (String) mod.get("modID");
+                String downloadLink = (String) mod.get("downloadLink");
+
+                // Check if the mod file exists in the mod folder
+                File modFile = new File("./mods/" + fileName);
+                if (!modFile.exists()) {
+
+                    // If the mod file doesnt exist, ask the user how they want to proceed
+                    System.out.println("ERROR: The " + name + " mod file could not be found in the mods folder.");
+                    Scanner scanner = new Scanner(System.in);
+                    System.out.println(
+                            "Do you want to redownload the mod file or remove it from the mod list? Type 'add' or 'remove':");
+                    String response = scanner.nextLine();
+
+                    if (response.equals("add")) {
+
+                        // Re download the mod
+                        ModManager.downloadFile(downloadLink, "./mods/" + fileName);
+                        System.out.println("Mod has been added");
+
+                    } else if (response.equals("remove")) {
+
+                        // Remove the mod from the mod list
+                        ModManager.removeMod(modID);
+                        System.out.println("Mod has been removed");
+
+                    } else {
+
+                        System.out.println("Invalid input");
+                        System.exit(0);
+
+                    }
+                }
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 

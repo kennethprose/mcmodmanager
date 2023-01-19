@@ -249,6 +249,7 @@ class ModManager {
             newMod.put("currentVersion", serverVersion);
             newMod.put("fileName", fileName);
             newMod.put("fileID", fileID);
+            newMod.put("downloadLink", downloadLink);
 
             // Add the new mod object to the 'mods' array
             modsArray.add(newMod);
@@ -349,6 +350,7 @@ class ModManager {
                 case "-c", "--check-updates":
                     init.configFile();
                     apiKey = init.apiKey();
+                    init.fileCheck();
 
                     checkUpdates(args[1]);
                     break;
@@ -356,12 +358,15 @@ class ModManager {
                 case "-a", "--add-mod":
                     init.configFile();
                     apiKey = init.apiKey();
+                    init.fileCheck();
 
                     addMod(args[1]);
                     break;
 
                 case "-r", "--remove-mod":
                     init.configFile();
+                    apiKey = init.apiKey();
+                    init.fileCheck();
 
                     removeMod(args[1]);
                     break;
