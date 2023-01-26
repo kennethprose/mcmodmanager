@@ -25,11 +25,12 @@ class ModManager {
                 usage: java mcmodmanager.java [OPTIONS]
 
                 OPTIONS:
-                    -h,         --help                  print usage information
-                    -c VERSION, --check-updates VERSION check for any available updates for all mods
-                    -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
                     -a ModID,   --add-mod ModID         Adds a new mod to mod list and installs it
+                    -c VERSION, --check-updates VERSION check for any available updates for all mods
+                    -h,         --help                  print usage information
+                    -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
                     -r ModID,   --remove-mod ModID      Removes a mod from the mod list and uninstalls it
+                    -s VERSION, --set-version           Sets which server version you are running
                     """;
         System.out.println(usage);
         System.exit(0);
@@ -51,6 +52,33 @@ class ModManager {
 
             // Add or overwrite the users key to the JSON data
             jsonData.put("apiKey", key);
+
+            // Write the updated data back to the JSON file
+            FileWriter file = new FileWriter("mcmodmanager.json");
+            file.write(jsonData.toJSONString());
+            file.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * This function is used to set the server version that you are running
+     *
+     * @param key The server verison to be set.
+     */
+    public static void setServerVersion(String version) {
+
+        JSONParser parser = new JSONParser();
+
+        try {
+
+            JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
+
+            // Add or overwrite the version in the JSON data
+            jsonData.put("serverVersion", version);
 
             // Write the updated data back to the JSON file
             FileWriter file = new FileWriter("mcmodmanager.json");
@@ -372,8 +400,6 @@ class ModManager {
 
     public static void main(String[] args) {
 
-        init.modFolder();
-
         if (args.length > 0) {
 
             switch (args[0]) {
@@ -385,6 +411,7 @@ class ModManager {
                 case "-c", "--check-updates":
                     init.configFile();
                     apiKey = init.apiKey();
+                    init.modFolder();
                     init.fileCheck();
 
                     checkUpdates(args[1]);
@@ -393,6 +420,7 @@ class ModManager {
                 case "-a", "--add-mod":
                     init.configFile();
                     apiKey = init.apiKey();
+                    init.modFolder();
                     init.fileCheck();
 
                     addMod(args[1]);
@@ -401,6 +429,7 @@ class ModManager {
                 case "-r", "--remove-mod":
                     init.configFile();
                     apiKey = init.apiKey();
+                    init.modFolder();
                     init.fileCheck();
 
                     removeMod(args[1]);
@@ -410,6 +439,12 @@ class ModManager {
                     init.configFile();
 
                     setAPIKey(args[1]);
+                    break;
+
+                case "-s", "--set-version":
+                    init.configFile();
+
+                    setServerVersion(args[1]);
                     break;
 
                 default:
