@@ -31,6 +31,7 @@ class ModManager {
                     -k API_KEY, --api-key API_KEY       Sets your CurseForge API key
                     -r ModID,   --remove-mod ModID      Removes a mod from the mod list and uninstalls it
                     -s VERSION, --set-version           Sets which server version you are running
+                    -u,         --update                Updates all mods
                     """;
         System.out.println(usage);
         System.exit(0);
@@ -175,6 +176,50 @@ class ModManager {
         os.close();
     }
 
+    public static void saveUpdateInfo(String modID, String fileName, String downloadLink, String newVersion,
+            long fileID) {
+
+        JSONParser parser = new JSONParser();
+
+        try {
+
+            JSONObject jsonData = (JSONObject) parser.parse(new FileReader("mcmodmanager.json"));
+            JSONArray modsArray = (JSONArray) jsonData.get("mods");
+
+            for (int i = 0; i < modsArray.size(); i++) {
+
+                JSONObject mod = (JSONObject) modsArray.get(i);
+                String currModID = (String) mod.get("modID");
+
+                if (currModID.equals(modID)) {
+
+                    // Create a new JSON object for the update info
+                    JSONObject updateInfo = new JSONObject();
+                    updateInfo.put("newFileName", fileName);
+                    updateInfo.put("newFileID", fileID);
+                    updateInfo.put("newDownloadLink", downloadLink);
+                    updateInfo.put("newVersion", newVersion);
+
+                    // Add new update info object to mod info
+                    mod.put("update", updateInfo);
+
+                    // Write the updated JSON object back to the file
+                    FileWriter file = new FileWriter("mcmodmanager.json");
+                    file.write(jsonData.toJSONString());
+                    file.close();
+
+                    return;
+
+                }
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
     /**
      * checkUpdates() function checks for updates of all mods in mcmodmanager.json
      *
@@ -220,7 +265,16 @@ class ModManager {
 
                     // Compare file IDs to see if a newer file is present
                     if (newfileID > fileID) {
+
                         System.out.println(name + " - Updates available");
+
+                        // Get rest of new file info
+                        String newFileName = (String) firstMod.get("fileName");
+                        String newDownloadLink = (String) firstMod.get("downloadUrl");
+
+                        // Save update info
+                        saveUpdateInfo(modID, newFileName, newDownloadLink, serverVersion, newfileID);
+
                     } else {
                         System.out.println(name + " - No updates available");
                     }
@@ -249,6 +303,16 @@ class ModManager {
 
                     // If there were results, then we know we can update
                     System.out.println(name + " is ready to update to " + desiredVersion);
+
+                    // Get new file info
+                    JSONArray dataArray = (JSONArray) getModFiles.get("data");
+                    JSONObject firstMod = (JSONObject) dataArray.get(0);
+                    long newfileID = (long) firstMod.get("id");
+                    String newFileName = (String) firstMod.get("fileName");
+                    String newDownloadLink = (String) firstMod.get("downloadUrl");
+
+                    // Save update info
+                    saveUpdateInfo(modID, newFileName, newDownloadLink, desiredVersion, newfileID);
 
                 }
 
@@ -445,6 +509,14 @@ class ModManager {
                     init.configFile();
 
                     setServerVersion(args[1]);
+                    break;
+
+                case "-u", "--update":
+                    init.configFile();
+                    apiKey = init.apiKey();
+                    init.modFolder();
+                    init.fileCheck();
+
                     break;
 
                 default:
